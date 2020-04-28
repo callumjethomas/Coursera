@@ -1,0 +1,26 @@
+---
+title: "Projects Under Version Control"
+author: "Callum Thomas"
+date: "28/04/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Projects Under Version Control
+
+This is a description of how to place existing RStudio projects under version control using GitHub, as laid out in Week 3 of the Coursera course "The Data Scientist's Toolbox" <https://www.coursera.org/learn/data-scientists-tools>. 
+
+## Linking an Existing Project with Git
+
+Open Git Bash or Terminal and navigate to the directory containing your R project files. Move around directories by typing `bash cd ~/dir/path/to/directory`.
+
+When the command prompt in the line before the dollar sign says the correct directory location of your project, you are in the correct location. Once here, type `bash git init` followed by `bash git add .` - this initializes (*init*) this directory as a *git* repository and *adds* all of the files in the directory (*.*) to your local repository. Commit these changes to the git repository using `bash git commit -m "Initial commit"`.
+
+## Linking the Project with GitHub
+
+Go to github.com and create a new repository, making sure the name is **exactly the same** as your R project name. Do **not** intialise a readme file, .gitignore or license.
+
+Once created you will see a repository page with a section titled “Push an existing repository from the command line” with instructions below containing code on how to do so. In Git Bash or Terminal, copy and paste these lines of code to link your repository with GitHub. After doing so, refresh your GitHub page and reopen your project in R Studio. You should now have access to the Git tab in the upper right quadrant and can push to GitHub from within RStudio any future changes.
