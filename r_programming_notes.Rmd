@@ -1,0 +1,151 @@
+---
+title: "R Programming"
+output: html_notebook
+---
+
+This notebook contains notes taken from the Coursera course [R Programming](https://www.coursera.org/learn/r-programming) created by Johns Hopkins University.
+
+## Week 1
+
+### Reading and writing data into R
+
+- `read.table, write.table` for reading/writing tabular data
+- `readLines, writeLines` for reading/writing lines of a text file
+- `source, dump` or `dget, dput` for reading/writing R code files
+
+#### Tabular formats
+
+`read.table` arguments:
+
+- `file`, for filename/connection
+- `header`, logical, indicates if there is a header line
+- `sep`, string, indicates the column separator
+- `colClasses`, vector, indicates class of each column (if blank, R will attempt to calculate)
+- `nrows`, number of rows (if blank, R will calculate)
+- `comment.char`, string, indicates comment character (default: `,` for `read.csv`)
+- `skip`, number of lines to skip from the beginning (default: `#`)
+- `stringsAsFactors` logical, should character variables be encoded as factors?
+
+When reading large datasets:
+
+- read [help page](https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/read.table) for `read.table`
+- know how much memory is available, what other applications or users are using resources, what the OS is (32-bit or 64-bit?)
+- roughly calculate amount of memory required to store the dataset:
+     - $\text{nrows} \times \text{ncolumns} \times 8 \text{ bytes/numeric}$
+- set `comment.char = ""` if there are no comments
+- set `nrows` so R can assign appropriate amount of memory (use `wc` in bash)
+- specify `colClasses` so R doesn't have to work each column class out. To work out classes of each column you can just check the first ~100 rows and loop over each column using `sapply`:
+
+```{r}
+initial <- read.table("datatable.txt", nrows = 100)
+classes <- sapply(initial, class)
+tabAll <- read.table("datatable.txt", colClasses = classes)
+```
+
+#### Textual formats
+
+- `dump` or `dput` can preserve the *metadata*  associated with specific columns or rows
+  - `dput` will *deparse* R objects, can pull metadata for us
+  - `dump` can be used on multiple R objects
+- tend to work better with version control programs (*e.g.* git)
+- can be safer for long-term storage as harder to repair corruption
+- not very space-efficient
+
+#### Interfacing with the outside world
+
+- `file`, opens a connection to a file
+- `gzfile`, opens up to a file compressed with gzip
+- `url`, opens a connection to a webpage
+
+Uses of connections:
+
+- reading or writing specific lines of a text file or website:
+
+```{r}
+con1 <-gzfile("words.gz")
+x <- readLines(con1, 10)
+
+con2 <-url("http://www.sample.com")
+y <- readLines(con2, 10)
+```
+
+### Subsetting data
+
+#### Operators:
+
+- `[]` always returns an object of the *same class* as the original, can be used to select *multiple elements*
+- `[[]]` extracts elements of a list or data frame, can only extract a *single element*, class of returned object will not necessarily be the same
+- `$` extracts *named* elements of a list or data frame
+
+#### Subsetting vectors:
+
+```{r}
+x <- c("a", "b", "c", "c", "d", "a")
+x[1:4] # values in [] are a numeric index
+x[x > "a"] # value in [] is a logical index
+```
+
+#### Subsetting lists:
+
+```{r}
+x <-list(foo = 1:4, bar = 0.6)
+x[1] # will generate a list
+x[[1]] # will generate a sequence (not a list)
+x$bar # will get the object "bar"
+```
+
+**NB:** `[[]]` operator can also be used with *computed indices* which are put into variables, whereas `$` can only be used with *literal* names.
+
+#### Subsetting matrices:
+
+```{r}
+x <- matrix(1:6, 2, 3) # creates a matrix
+x 
+x[1, 2] # subsets object in first row, second column
+x[, 2] # subsets entire second column
+```
+
+**NB:** By default, when a single element, column or row is retrieved with `[]`, it will return a *vector* of length 1. To return a 1×1 *matrix*, set `drop = FALSE`.
+
+#### Subsetting with names:
+
+Partial matching of names is possible using the `[[]]` and `$` operators.
+
+```{r}
+x <- list(aardvark = 1:5)
+x$a
+x[["a"]] # expects an exact match
+x[["a", exact = FALSE]] # will extract a partial match
+```
+
+#### Removing missing data:
+
+```{r}
+x <- c(1, NA, NA, 4, NA, 5)
+bad <- is.na(x) # vector of NA values in x
+x[!bad] # returns vector of values in x that are *not* NA
+
+y <- c("a", "b", NA, "d", NA, "f")
+good <- complete.cases(x,y) # vector of positions where *both* elements are *not* NA
+y[good]
+
+airquality[1:6, ] # this table has missing values
+good <- complete.cases(airquality) # vector of rows with no missing data
+airquality[good, ][1:6, ] # now only includes rows without missing values
+```
+
+### Vectorised operations 
+
+R's ability to perform vectorised operations reduces your need to write `for` or `while` loops for simple calculations.
+
+```{r}
+x <- 1:4
+y <- 6:9
+x + y # adds nth value from x to equivalent value of y in parallel
+x > 2 # compares all values in x to 2
+
+x <- matrix(1:4, 2, 2)
+y <- matrix(rep(10,4), 2, 2)
+x * y # this will perform an *element-wise multiplication*
+x %*% y # this will perform a *true matrix multiplication*
+```
