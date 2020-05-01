@@ -1,9 +1,14 @@
 ---
 title: "R Programming"
-output: html_notebook
+output:
+  html_notebook:
+      code_folding: none
 ---
 
-This notebook contains notes taken from the Coursera course [R Programming](https://www.coursera.org/learn/r-programming) created by Johns Hopkins University.
+This notebook contains notes taken from the Coursera course [R Programming](https://www.coursera.org/learn/r-programming) created by Johns 
+Hopkins University.
+
+***
 
 ## Week 1
 
@@ -20,21 +25,26 @@ This notebook contains notes taken from the Coursera course [R Programming](http
 - `file`, for filename/connection
 - `header`, logical, indicates if there is a header line
 - `sep`, string, indicates the column separator
-- `colClasses`, vector, indicates class of each column (if blank, R will attempt to calculate)
+- `colClasses`, vector, indicates class of each column (if blank, R will attempt
+to calculate)
 - `nrows`, number of rows (if blank, R will calculate)
-- `comment.char`, string, indicates comment character (default: `,` for `read.csv`)
+- `comment.char`, string, indicates comment character (default: `,` for 
+`read.csv`)
 - `skip`, number of lines to skip from the beginning (default: `#`)
 - `stringsAsFactors` logical, should character variables be encoded as factors?
 
 When reading large datasets:
 
 - read [help page](https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/read.table) for `read.table`
-- know how much memory is available, what other applications or users are using resources, what the OS is (32-bit or 64-bit?)
+- know how much memory is available, what other applications or users are using 
+resources, what the OS is (32-bit or 64-bit?)
 - roughly calculate amount of memory required to store the dataset:
-     - $\text{nrows} \times \text{ncolumns} \times 8 \text{ bytes/numeric}$
+- $\text{nrows} \times \text{ncolumns} \times 8 \text{ bytes/numeric}$
 - set `comment.char = ""` if there are no comments
 - set `nrows` so R can assign appropriate amount of memory (use `wc` in bash)
-- specify `colClasses` so R doesn't have to work each column class out. To work out classes of each column you can just check the first ~100 rows and loop over each column using `sapply`:
+- specify `colClasses` so R doesn't have to work each column class out. To work 
+out classes of each column you can just check the first ~100 rows and loop over 
+each column using `sapply`:
 
 ```{r}
 initial <- read.table("datatable.txt", nrows = 100)
@@ -44,9 +54,10 @@ tabAll <- read.table("datatable.txt", colClasses = classes)
 
 #### Textual formats
 
-- `dump` or `dput` can preserve the *metadata*  associated with specific columns or rows
-  - `dput` will *deparse* R objects, can pull metadata for us
-  - `dump` can be used on multiple R objects
+- `dump` or `dput` can preserve the *metadata*  associated with specific columns
+or rows
+- `dput` will *deparse* R objects, can pull metadata for us
+- `dump` can be used on multiple R objects
 - tend to work better with version control programs (*e.g.* git)
 - can be safer for long-term storage as harder to repair corruption
 - not very space-efficient
@@ -73,8 +84,10 @@ y <- readLines(con2, 10)
 
 #### Operators:
 
-- `[]` always returns an object of the *same class* as the original, can be used to select *multiple elements*
-- `[[]]` extracts elements of a list or data frame, can only extract a *single element*, class of returned object will not necessarily be the same
+- `[]` always returns an object of the *same class* as the original, can be used
+to select *multiple elements*
+- `[[]]` extracts elements of a list or data frame, can only extract a *single* 
+*element*, class of returned object will not necessarily be the same
 - `$` extracts *named* elements of a list or data frame
 
 #### Subsetting vectors:
@@ -94,7 +107,8 @@ x[[1]] # will generate a sequence (not a list)
 x$bar # will get the object "bar"
 ```
 
-**NB:** `[[]]` operator can also be used with *computed indices* which are put into variables, whereas `$` can only be used with *literal* names.
+**NB:** `[[]]` operator can also be used with *computed indices* which are put 
+into variables, whereas `$` can only be used with *literal* names.
 
 #### Subsetting matrices:
 
@@ -105,7 +119,9 @@ x[1, 2] # subsets object in first row, second column
 x[, 2] # subsets entire second column
 ```
 
-**NB:** By default, when a single element, column or row is retrieved with `[]`, it will return a *vector* of length 1. To return a 1×1 *matrix*, set `drop = FALSE`.
+**NB:** By default, when a single element, column or row is retrieved with `[]`,
+it will return a *vector* of length 1. To return a 1×1 *matrix*, set 
+`drop = FALSE`.
 
 #### Subsetting with names:
 
@@ -126,7 +142,7 @@ bad <- is.na(x) # vector of NA values in x
 x[!bad] # returns vector of values in x that are *not* NA
 
 y <- c("a", "b", NA, "d", NA, "f")
-good <- complete.cases(x,y) # vector of positions where *both* elements are *not* NA
+good <- complete.cases(x,y) # vector where *both* elements are *not* NA
 y[good]
 
 airquality[1:6, ] # this table has missing values
@@ -136,7 +152,8 @@ airquality[good, ][1:6, ] # now only includes rows without missing values
 
 ### Vectorised operations 
 
-R's ability to perform vectorised operations reduces your need to write `for` or `while` loops for simple calculations.
+R's ability to perform vectorised operations reduces your need to write `for` or
+`while` loops for simple calculations.
 
 ```{r}
 x <- 1:4
@@ -147,5 +164,160 @@ x > 2 # compares all values in x to 2
 x <- matrix(1:4, 2, 2)
 y <- matrix(rep(10,4), 2, 2)
 x * y # this will perform an *element-wise multiplication*
-x %*% y # this will perform a *true matrix multiplication*
+x %*% y # this will perform a *true matrix multiplication* 
 ```
+
+***
+
+## Week 2
+
+### Control Structures
+
+- `if`, `else`: test a condition
+- `for`: execute a loop a fixed number of times
+- `while`: execute a loop while a condition is true (*can be infinite if* 
+*condition is never true*)
+- `repeat`: execute an infinite loop
+- `break`: break out of a loop entirely
+- `next`: skip an iteration in a loop
+- `return`: exit a function and return a value
+
+For example:
+```{r}
+if (x > 3) {
+  y <- 10
+} else {
+  y <- 0
+}
+
+# or we can assign the entire construct to y
+
+y <- if(x > 3) {
+  10
+} else {
+  0
+}
+```
+
+### Writing functions
+
+- created using `function()`
+- treated as objects, therefore can be passed as arguments to other functions 
+and can be *nested* inside one another
+- return value of a function is the last expression to be evaluated
+
+#### Arguments:
+
+- *named arguments* can have *default values*
+- *formal arguments* are included in the function's definition
+- `formals` function will return a list of all formal arguments in a function
+- not every function uses all formal arguments, some can be missing or will 
+have default values
+- arguments can be matched *positionally* (by position in the function 
+definition) or *by name* (with `=`)
+- **NB**: when an argument is matched *by name* it is "taken out" of the 
+argument list, the remaining arguments will be matched *positionally*
+- **NB**: function arguments can also be *partially* matched with the following 
+logic:
+1. look for exact match for named argument
+2. look for partial match
+3. perform positional match
+- the ellipsis (...) argument can be used to indicate a *variable number of 
+arguments* that are passed on to other functions
+- **NB**: any functions after the ellipsis argument must be explicit and 
+*cannot* be partically matched
+
+#### Lazy evaluation:
+R will only evaluate function arguments *as needed*, for example:
+
+```{r}
+f <- function(a, b) {
+  print(a)
+  print(b)
+}
+f(45)
+```
+Note how the error only occured *after* the first argument was evaluated and the
+first value was printed out.
+
+#### Examples of writing functions:
+```{r}
+add2 <- function(x, y){
+  x + y
+}
+
+# once we've defined the function, we can call it like so:
+
+add2(5, 6) 
+```
+
+```{r}
+above_n <- function(x, n = 10) {
+  use <- x > n # work out which elements are > n (default to 10)
+  x[use] # return those values
+}
+
+above_n(1:20, 12)
+above_n(1:20) # without n input, will default to n = 10
+```
+
+```{r}
+columnmean <- function(y, removeNA = TRUE) {
+  nc <- ncol(y) # count the columns in df/matrix
+  means <- numeric(nc) # initialise empty vector of same length to store means
+  for(i in 1:nc) { # for each number from 1 to [number of columns]
+    means[i] <- mean(y[, i], na.rm = removeNA) # add mean of the ith column 
+    # remove missing values if removeNA = TRUE.
+  }
+  means # return the vector of means
+}
+
+columnmean(airquality) # test on a dataset
+```
+
+**NB**: Generally it is best to save functions as R scripts and source them into
+R. Here they are included in the notebook for simplicity's sake.
+
+### Coding Standards for R
+1. Always use plain text
+2. Indent your code (*e.g.* 4 to 8 char)
+3. Limit code width (*e.g.* to 80 columns)
+
+This will make you limit sizes of functions, and will make your code more
+readable to yourself and to others and easier to debug if things go wrong.
+
+### Dates and Times in R
+Dates and times are represented in special classes:
+
+- `Date` for dates, stored as number of *days* since 1970-01-01
+- `POSIXct` and `POSIXlt` for times, stored as number of *seconds* since 
+1970-01-01
+  - `POSIXct` stores information as a large integer, useful for storing times
+in data frames, etc.
+  - `POSIXlt` stores information as a *list*, can include other useful info.
+- a number of generic functions give us other info when applied to dates/times:
+  - `weekdays` gives day of the week
+  - `months` gives the month
+  - `quarters` gives the annual quarter (Q1 - Q4)
+- the `strptime` function can convert dates written in strings in different
+string formats to `Date`/`POSIXlt`format
+- you can perform mathematical operations on dates/times *so long as they are*
+*in the same format*
+
+Example of converting to date:
+```{r}
+x <- as.Date("1992-04-11")
+x # looks like a character string
+class(x) # actually a Date class
+unclass(x) # raw data stored as a number of days
+```
+
+Example of mathematical operations with dates:
+```{r}
+x <- as.Date("2012-03-01")
+y <- as.Date("2012-02-28")
+
+x - y # Find difference (in days) between two dates.
+```
+**NB**: R will take care of complicating facors such as leap years, time zones, 
+etc. automatically.
