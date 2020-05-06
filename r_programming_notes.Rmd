@@ -321,3 +321,233 @@ x - y # Find difference (in days) between two dates.
 ```
 **NB**: R will take care of complicating facors such as leap years, time zones, 
 etc. automatically.
+
+***
+
+## Week 3 
+
+### Loop functions
+
+- `lapply`: Loop over a list, apply a function to each element
+- `sapply`: Same as `lapply` but try to simplify the result
+- `apply`: Apply a function over the margins of an array (*e.g.* summarise
+matricies, etc.)
+- `tapply`: Apply a function over subsets of a vector
+- `mapply`: Multivariate version of `lapply`
+- `split`: Splits objects into sub-spieces, often used in conjunction with the
+above functions
+
+#### lapply
+
+`lapply` takes three arguments:
+
+  1. a list (`x`)
+  2. a function (`FUN`)
+  3. other arguments (`...`)
+  
+**NB:** If `x` is not a list, it will be coerced using `as.list`. 
+Output will *always be a list*.
+
+```{r}
+lapply
+```
+
+For example:
+
+```{r}
+x <- list(a = 1:5, b = rnorm(10))
+lapply(x, mean)
+```
+
+```{r}
+x <- 1:4
+lapply(x, runif, min = 0, max = 10)  # call runif on each element of x
+
+```
+
+```{r}
+x <- list(a = matrix(1:4, 2, 2), b = matrix(1:6, 3, 2))
+# suppose we want to extract the first column from each matrix?
+# we can write an *anonymous function* which will only exist within this loop:
+lapply(x, function(element) element[, 1])
+```
+
+### sapply
+
+`sapply` tries to *simplify* `lapply` output, *e.g.*:
+
+- If the result is a list where every element has length = 1, return a *vector*.
+- If the result is a list where every element has equal length > 1, return a 
+*matrix*.
+- If the result can't be simplified, just return a list.
+
+### apply
+
+`apply` is usually used to evaluate a (often anonymous) function over the
+margins of an array. 
+
+- Usually this means applying a function to the *rows or columns of a matrix*.
+- Can also be used with general arrays, *e.g.* mean of an array of matricies.
+- Not really faster than writing a loop, but works in one line, very useful
+on the command line.
+
+```{r}
+str(apply)
+```
+
+- `X` is an *array*.
+- `MARGIN` is an integer vector indicating which *margins* should be "retained".
+- `FUN` is the function to be applied.
+- `...` is for other arguments passed to `FUN`.
+
+For example:
+
+```{r}
+x <- matrix(rnorm(200), 20, 10) # a matrix of 20 x 10
+apply(x, 2, mean) # calculate the mean of each column of the matrix
+apply(x, 1, sum) # calculate the sum of each row of the matrix
+```
+
+**NB**: The *margin* here indicates the *dimension*  of the matrix we want 
+to 'keep'. For sums and means of matricies there are actually some shortcuts:
+
+- `rowSums = apply(x, 1, sum)`
+- `rowMeans = apply(x, 1, mean)`
+- `colSums = apply(x, 2, sum)`
+- `colMeans = apply(x, 2, mean)`
+
+Other examples:
+```{r}
+x <- matrix(rnorm(200), 20, 10)
+apply(x, 1, quantile, probs = c(0.25, 0.75)) # get quantiles of each row
+```
+
+```{r}
+a <- array(rnorm(2 * 2 * 10), c(2, 2, 10)) # 3-dimensional array
+apply(a, c(1, 2), mean) # get the average of these 2x2 matricies, keep dim 1 & 2
+rowMeans(a, dims = 2) # can also use rowMeans
+```
+
+### mapply
+
+`mapply` applies a function *in parallel* over a set of arguments, for example 
+if we have *two* lists we want to apply a function over.
+
+```{r}
+str(mapply)
+```
+
+- `FUN` is the function to apply.
+- `...` contains the list of arguments to apply over.
+- `MoreArgs` is a list of other arguments of `FUN`
+- `SIMPLIFY`indicates whether to simplify result like in `sapply`.
+
+**NB**: The function you use must have at least the same number of arguments
+as items in the list of arguments you pass to it.
+
+For example:
+Instead of typing `list(rep(1, 4), rep(2, 3), rep (3, 2), rep (4, 1)) we can do:
+
+```{r}
+mapply(rep, 1:4, 4:1)
+```
+
+### tapply
+
+`tapply` applies functions over *subsets of a vector*. 
+
+```{r}
+str(tapply)
+```
+
+- `X` is a *vector*.
+- `INDEX` is a factor/list of factors, indicating your *subset*.
+- `FUN` is the function to be applied.
+- `...` contains other arguments passed to `FUN`.
+- `simplify` is same as in `sapply`.
+
+For example:
+```{r}
+x <- c(rnorm(10), runif(10), rnorm(10, 1)) # our vector of three distributions
+f <- gl(3, 10) # our factor, with three levels, each repeated 10 times
+tapply(x, f, mean) # get the mean of each of the three groups in x
+```
+
+### split
+
+`split` takes a vector or other object and splits it into groups determined by 
+a factor or list of factors. It will always return a *list*.
+
+It is similar to `tapply` but without applying the summary statistics.
+
+```{r}
+str(split)
+```
+
+- `x` is an object.
+- `f` is a factor/list of factors.
+- `drop` indicates whether *empty* factor levels should be dropped.
+
+For example:
+
+```{r}
+x <- c(rnorm(10), runif(10), rnorm(10, 1))
+f <- gl(3, 10)
+split(x, f)
+```
+
+Here we see `split` has split out vector of three distributions into a 
+list with 3 parts. We can also split a *data frame*:
+
+```{r}
+library(datasets)
+s <- split(airquality, airquality$Month) # split data frame by Month (-> factor)
+sapply(s, function(x) colMeans(x[, c("Ozone", "Solar.R", "Wind")], na.rm=TRUE))
+```
+
+We can also split on *multiple levels*:
+
+```{r}
+x <- rnorm(10) # vector
+f1 <- gl(2, 5) # first factor, 2 levels, each repeated 5 times
+f2 <- gl(5, 2) # second factor, 5 levels, each repeated 2 times
+str(split(x, list(f1, f2), drop = TRUE)) # automatically gets the interactions
+```
+
+### Debugging
+
+When there is a problem, R can return certain notifications:
+
+- `message`: generic notification, execution of function continues.
+- `warning`: indication something is wrong, execution of function continues.
+- `error`: indication of fatal problem, execution is stopped.
+  - these are all a `condition`: indicates that something unexpected occurred.
+  
+Questions to ask yourself when debugging:
+
+- What was the actual input?
+- How was the function called?
+- What were you expecting? Output, messages, other result?
+- What did you get instead?
+- How does what you got differ from what you expected?
+- Were your expectations correct in the first place?
+- Can you reproduce the problem exactly?
+
+Base R has certain tools built in for debugging:
+
+- `traceback`: prints out the *function call stack* after an error occurs.
+- `debug`: flags a function for "debug" mode, allowing you to step through
+execution *one step at a time*.
+- `browser`: suspends the execution of a function *wherever it is called*
+and puts it in "debug" mode.
+- `trace`: lets you insert debugging code into a function without actually 
+editing the function itself.
+- `recover`: allows you to modify the error behaviour, so you can browse the 
+function call stack, (*e.g.* not go straight back to console).
+
+***
+
+
+
+
+
