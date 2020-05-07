@@ -1,9 +1,4 @@
 best <- function(state, outcome) {
-        # DEBUG
-        
-        #outcome = "pneumonia"
-        #state = "FL"
-        
         # Read outcome data
         data <- read.csv("outcome-of-care-measures.csv", 
                             colClasses = "character")
