@@ -1,4 +1,4 @@
-rankall <- function(outcome, num){
+rankall <- function(outcome, num = 1){
 
         # Read outcome data
         data <- read.csv("outcome-of-care-measures.csv", 
