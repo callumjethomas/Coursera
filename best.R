@@ -32,8 +32,7 @@ best <- function(state, outcome) {
         # Sort by 30-day deaths (low to high) and then alphabetically by hospital name
         sorted <- clean[order(clean[,2], clean[,1]),]
    
-        # Return hospital name in state with lowest 
-        # 30-day death rate for the outcome
+        # Return hospital name in state with lowest 30-day death rate for the outcome
         s <- sorted[1,1]
         s
 }
