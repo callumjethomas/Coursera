@@ -7,7 +7,7 @@ rankall <- function(outcome, num = 1){
         # Get list of states
         states <- sort(unique(data$State))
                 
-        # Subset by outcome, select hospital name and relevant 30-day death column
+        # Subset by outcome, select only the hospital name, state and relevant 30-day death columns
         if (outcome == "heart attack") {
                 subdata <- subset(data, select = c(2, 7, 11))
                 
@@ -29,16 +29,17 @@ rankall <- function(outcome, num = 1){
         # Remove rows with missing values
         clean <- subdata[complete.cases(subdata), ]
         
-        # Sort by 30-day deaths (low to high) and then alphabetically by hospital name
+        # Sort by state, then by 30-day deaths (low to high) and then alphabetically by hospital name
         sorted <- clean[order(clean[, 2], clean[, 3], clean[, 1]), ]
         
         # Initialise a data frame to store output in.
         output <- data.frame()
         
-        # Loop through each state and get the hospital of desired rank
+        # Loop through each state and get the hospital of desired rank from each
         for (i in states) {
+                # Subset the sorted list by the ith state,
                 sub_sorted <- subset(sorted, sorted$State == i)
-                # Return list indexed by num
+                # Return the item in the sorted list indexed by "num"
                 if (num == "best") {
                         # Get hospital name in state with lowest 30-day death rate for the outcome
                         r <- sub_sorted[1, 1] 
@@ -50,7 +51,7 @@ rankall <- function(outcome, num = 1){
                         # Get hospital name in state with 30-day death rate for outcome at rank equal to num
                         r <- sub_sorted[num, 1]
                 }
-                # Return selected hospital name and state and bind to data frame
+                # Return selected hospital name and state and bind to output data frame
                 row <- (cbind(r, i))
                 output <- rbind(output, row)
         }
