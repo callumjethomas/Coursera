@@ -547,7 +547,161 @@ function call stack, (*e.g.* not go straight back to console).
 
 ***
 
+## Week 5
 
+### str
 
+`str` compactly displays the internal function of an R object. It is useful as a diagnostic function as an alternative to `summary`. 
 
+- Well suited to compactly display large, nested lists.
+- Approximately one line per basic object.
+- Answers question "What's in this object?"
 
+For example:
+
+```{r}
+str(lm) # looking into functions
+
+x <- rnorm(100, 2, 4)
+str(x) # looking into objects
+
+f <- gl(40,10)
+str(f) # looking into factors
+
+str(airquality) # looking into a data frame
+
+s <- split(airquality, airquality$Month) # looking into a list
+str(s)
+```
+
+### Simulation
+
+Generally probability distribution functions have four functions associated with them,
+each prefixed with a:
+
+- `d` for density
+- `r` for random number
+- `p` for cumulative distribution ("probability)
+- `q` for quantile function
+
+For example, the functions for Normal distributions are:
+
+- `rnorm`: generate random Normal variates within given mean and standard deviation.
+- `dnorm`: evaluate Normal probability density (w/ mean and SD) at a point.
+- `pnorm`: evaluate cumulative distribution function for a Normal distribution.
+- `qnorm`: evaluate quantiles from Normal distribution.
+
+```{r}
+dnorm(x, mean = 0, sd = 1, log = FALSE)
+pnorm(q, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)
+qnorm(p, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)
+rnorm(n, mean = 0, sd = 1)
+```
+
+To generate random numbers:
+```{r}
+x <- rnorm(10, 20, 2) # get 10 random numbers with a mean of 20 and sd of 2
+x
+summary(x)
+```
+
+**NB**: Setting seeds when producing "random" numbers ensures reproducability. This is because computers aren't capable of producing truly random numbers, but instead produce
+numbers which are *close enough*  to random for our purposes based on an initial seed. We should always set a seed when generating random numbers for simluations so that our results can be reproduced by someone else, *e.g.*:
+```{r}
+set.seed(1) 
+rnorm(5)
+
+rnorm(5) # without setting seed, we will get DIFFERENT "random" numbers
+
+set.seed(1)
+rnorm(5) # now that we set the seed to 1, we get the SAME "random" numbers
+```
+
+#### Generating random numbers from a linear model
+
+Suppose we want to simulate from the following linear model:
+$$ y = \beta_{0} + \beta_{1}x + \varepsilon$$
+where $\varepsilon \sim \mathcal{N}(0,2^{2})$. Assume $x \sim \mathcal{N}(0, 1^{2})$,
+$\beta_{0} = 0.5$ and $\beta_{1} = 2$:
+
+```{r}
+set.seed(20) # set our seed for reproducibility
+x <- rnorm(100) # generate predictor from Normal distribution (w/ default mean/sd)
+e <- rnorm(100, 0, 2) # generate epsilon with mean 0, sd 2
+
+y <- 0.5 + 2 * x + e # create model inputting our values for beta, x and epsilon
+summary(y)
+plot(x, y)
+```
+
+Suppose instead we want to simulate from the following Poisson model:
+$$Y \sim {\sf Poisson(\mu)}$$ 
+$$\log(\mu) = \beta_{0} + \beta_{1}x$$ 
+where $\beta_{0} = 0.5$ and $\beta_{1} = 0.3$. We will need to use `rpois`:
+
+```{r}
+set.seed(1) # set seed for reproducability
+x <- rnorm(100) # set predictor x as Normal distribution
+log.mu <- 0.5 + 0.3 * x # set log(mu) as outlined in model
+
+y <- rpois(100, exp(log.mu)) # create model with above values and poisson distribution
+summary(y)
+plot(x, y)
+```
+
+#### Random sampling in R
+
+`sample` allows you to draw randomly from a specific set of objects, allowing you to sample from arbitrary distributions.
+
+For example:
+```{r}
+set.seed(1)
+sample(1:10, 4)
+sample(1:10, 4)
+set.seed(1)
+sample(1:10, 4)
+sample(letters, 5)
+sample(1:10)
+sample(1:10, replace = TRUE) # with replacement
+```
+
+### Profiling in R
+
+Profiling exists to answer the question: "Why is my code so slow?". 
+
+It is a systematic way to examine how much time R is spending in different parts of a
+program, allowing us to optimise our code. Often code may run fine once, but if we
+iterate it 1000 times it  may slow everything down.
+
+General principles:
+
+- Design first, optimise *second*.
+- Don't prematurely optimise!
+- Measure, collect data, don't guess.
+
+#### Using `system.time()`
+
+Allows you to test certain functions/blocks to see if they are taking an excessive amount of time, but you need to know *where* to look!
+
+- Takes an R expression as input, returns the amount of time taken to evaluate it.
+- If there's an error, will give the time until the error occurred. 
+- Will return the time *in seconds* in a class `proc_time` including:
+  - **user time**: time charged to the CPU to run the expression
+  - **elapsed time**: "wall clock" time that *you* experience
+    - may be *larger* than user time if CPU spends a lot of time idling
+    - may be *smaller* than user time if we have multiple cores
+
+#### Using R Profiler
+
+`Rprof()` starts the R profiler, as long as R is compiled with profiler support, `summaryRprof()` takes the output of the profiler and summarises it.
+
+**NB**: Do *not* use `system.time()` and `Rprof()` together, they are not compatible.
+
+- `Rprof()` keeps track of the function call stack at regular intervals and tabulate
+how much time is spent on each function.
+- Default sampling interval is 0.02 seconds, if your code is quicker than this, it will
+not be useful (or needed).
+- To normalise the `summaryRprof()` data we can use:
+  - `by.total` which divides the time spent by the total run time
+  - `by.self` which does the same *after* subtracting time already spent in functions
+  above in the call stack, often more useful
