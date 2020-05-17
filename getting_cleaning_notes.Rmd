@@ -324,7 +324,7 @@ head(chicago)
 
 #### `rename`
 ```{r}
-chicago <- rename(chicago, pm25 = pm25tmean2, dewpoint = dptp) # rename columns
+chicago <- rename(chicago, c(pm25tmean2 = "pm25", dptp = "dewpoint")) # rename columns
 head(chicago)
 ```
 
@@ -417,4 +417,188 @@ join_all(dfList)
 
 ***
 
+## Week 4
 
+### Fixing character vectors
+
+Getting data:
+```{r}
+if(!file.exists("./Data")){dir.create("./Data")}
+fileUrl <- "https://data.baltimorecity.gov/api/views/dz54-2aru/rows.csv?accessType=DOWNLOAD"
+download.file(fileUrl, "./Data/cameras.csv")
+cameraData <- read.csv("./Data/cameras.csv")
+```
+
+Forcing lowercase:
+```{r}
+names(cameraData)
+tolower(names(cameraData))
+```
+
+Splitting names:
+```{r}
+splitNames = strsplit(names(cameraData), "\\.")
+splitNames[[6]]
+```
+
+Remove periods and get only first part of the variable name:
+```{r}
+firstElement <- function(x){x[1]}
+sapply(splitNames, firstElement)
+```
+
+Revisiting peer review data:
+```{r}
+reviews <- read.csv("./Data/reviews.csv")
+solutions <- read.csv("./Data/solutions.csv")
+names(reviews)
+```
+
+### `sub()` and `gsub()`
+
+```{r}
+sub("_","",names(reviews),) # to remove underscores in names
+gsub("_","","this_is_a_test") # remove underscores greedily
+```
+
+### `grep()` and `grepl()`
+```{r}
+grep("Alameda", cameraData$intersection) # numeric vector of locations
+table(grepl("Alameda", cameraData$intersection)) # logical vector
+cameraData2 <- cameraData[!grepl("Alameda", cameraData$intersection), ] # subset by search
+
+grep("Alameda", cameraData$intersection, value = TRUE) # filter values that contain a search term
+length(grep("JeffStreet", cameraData$intersection)) # check if a value is absent (= 0)
+```
+
+### Other useful string functions
+
+```{r}
+library(stringr)
+nchar("Jeffrey Leek") # count characters in a string
+substr("Jeffrey Leek", 1, 7) # get substring from char 1-7
+paste("Jeffrey", "Leek") # join strings, separated by space
+paste0("Jeffrey", "Leek") # join strings without a space
+str_trim("Jeff     ") # remove whitespace at beginning/end
+``` 
+
+### Important points about text in datasets
+
+- Names of variables should be:
+   - All lower case
+   - Descriptive (*e.g.: "diagnosis" instead of "Dx").
+   - Unique (not duplicated).
+   - Without underscores, dots or white space.
+ 
+- Variables with character values should be:
+   - Usually made into factor .
+   - Descriptive (*e.g.* use TRUE/FALSE instead of 0/1).
+   
+### Regular expressions (`regex`)
+
+#### Metacharacters:
+
+- `^` represents start of the line.
+- `$` represents the end of the line.
+- `.` represents *any* character.
+   - *e.g.* `a.c` will match: abc, acc, adc, aec, etc.
+- `|` represents two alternative matches ("or"):
+   - *e.g.* `a|b|c` will match: a, b or c.
+- `()` can be used to constrain alternatives in a position:
+   - *e.g.* `^(a|b|c)` will match only lines *starting with* a, b or c.
+   - it can also let us "remember" the contents later in combination with `\1`, `\2`, 
+   *e.g.*: `+([a-zA-Z]+) +\1 +`.
+- `{}` let us specify the minimum and maximum number of matches of an expression.
+   - `{m, n}` matches at least *m*, but not more than *n* times.
+   - `{m}` matches exactly `m` matches.
+   - `{m, }` matches at least `m` matches.
+- `?` after parenthesis indicates the expression is *optional*.
+- `*` matches any number of the preceding character, *including none*. 
+   - **NB**: will match *greedily* (the longest possible string), 
+   but this can be turned off by combination with `?`.
+- `+` meatches at least one of the preceding characters.
+- `\` allows us to "escape" metacharacters.
+- `[]` allow us to list a set of characters to accept as a match, 
+or a *range* of characters using `-`:
+   - *e.g.* `[Aa][Bb][Cc]` would match: ABC, abc, Abc, aBC, aBc, *etc*.
+   - *e.g.* [0-9] will match *any* numeral, [a-zA-Z] will match *any* uppercase letter.
+- `^` can also be used within `[]` to match characters NOT included in the set: 
+   - *e.g.* `[^?.]$` would find lines NOT ending with a `?` or a `.`.
+   
+### Dates
+
+```{r}
+d1 = date()
+d1
+class(d1)
+
+d2 = Sys.Date()
+d2
+class(d2)
+```
+
+#### Formatting dates
+
+- `%d`: day as a number (0-31)
+- `%a`: abbreviated weekday
+- `%A`: unabbreviated weekday
+- `%m`: month as number (00-12)
+- `%b`: abbreviated month
+- `%B`: unabbreviated month
+- `%y`: 2-digit year
+- `%Y`: 4-digit year
+
+```{r}
+format(d2, "%a %b %d")
+```
+
+### Converting to date class
+```{r}
+x = c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
+z = as.Date(x, "%d%b%Y")
+z
+```
+
+### `lubridate`
+```{r}
+library(lubridate)
+ymd("20140108")
+mdy("08/04/2013")
+dmy("03-04-2013")
+ymd_hms("2011-08-03 10:15:03", tz="Pacific/Auckland")
+```
+
+## Data resources
+
+### Open government sites
+- United Nations, http://data.un.org
+- United States, http://www.data.gov
+- United Kingdom, http://data.gov.uk
+- France, http://www.data.gouv.fr
+- Germany, http://www.govdata.de
+- Australia, http://data.gov.au
+- Japan, http://www.data.go.jp
+- Hong Kong, http://www.gov.hk/en/theme/psi/datasets
+- Ghana, http://data.gov.gh
+- Others, http://www.data.gov/opendatasites
+
+### Gapminder
+- Data about development and human health, http:///www.gapbinder.org
+
+### United States Survey Data
+- http://www.asdfree.com
+
+### Collections by data scientists
+- Hilary Mason, http://bitly.com/bundles/hmason/1
+- Peter Skomoroch, http://delicious.com/pskomoroch/dataset
+- Jeff Hammembacher, https://www.quora.com/q/voliiptdhjuscaql 
+- Gregory Piatetsky-Shapiro, http://www.kdnuggets.com/gps.html
+- Others, http://blog.mortardata.com/post/6765289761/6-dataset-lists-curated-by-data-scientists 
+
+### APIs with R interfaces
+- Twitter and `twittR`
+- Figshare and `rfigshare`
+- PLoS and `rplos`
+- `rOpenSci`
+- Facebook and `RFacebook`
+- Google Maps and `RGoogleMaps`
